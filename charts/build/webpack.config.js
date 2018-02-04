@@ -6,7 +6,7 @@ var path = require('path');
 
 // 辅助函数
 var utils = require('./utils');
-var fullPath  = utils.fullPath;
+var fullPath = utils.fullPath;
 var pickFiles = utils.pickFiles;
 
 // 项目根路径
@@ -19,7 +19,7 @@ var SRC_PATH = path.join(ROOT_PATH, 'src');
 var DIST_PATH = ROOT_PATH + '/dist';
 
 // node_modules
-var NODE_MODULES_PATH =  ROOT_PATH + '/node_modules';
+var NODE_MODULES_PATH = ROOT_PATH + '/node_modules';
 
 var __DEV__ = process.env.NODE_ENV !== 'production';
 
@@ -80,9 +80,12 @@ var config = {
     chunkFilename: __DEV__ ? 'js/[name].js' : 'js/[name].[chunkhash].js'
   },
   module: {},
+
   resolve: {
     root: SRC_PATH,
-    alias: alias
+    alias: alias,
+    modulesDirectories: ['node_modules', path.join(__dirname, '../node_modules')],
+    extensions: ['', '.web.js', '.js', '.json'],
   },
   plugins: [
     new webpack.DefinePlugin({
@@ -97,7 +100,8 @@ var config = {
     // 使用 hash 作模块 ID，文件名作ID太长了，文件大小剧增
     new HashedModuleIdsPlugin(),
     // 根据文件内容生成 hash
-    new WebpackMd5Hash()
+    new WebpackMd5Hash(),
+    
   ]
 };
 
@@ -108,7 +112,7 @@ config.module.loaders = [];
 
 // 使用 babel 编译 jsx、es6
 config.module.loaders.push({
-  test: /\.js$/,
+  test: /\.(jsx|js)$/,
   exclude: /node_modules/,
   // 这里使用 loaders ，因为后面还需要添加 loader
   loaders: ['babel?cacheDirectory=' + CACHE_PATH]
@@ -133,7 +137,7 @@ if (__DEV__) {
 // css autoprefix
 var precss = require('precss');
 var autoprefixer = require('autoprefixer');
-config.postcss = function() {
+config.postcss = function () {
   return [precss, autoprefixer];
 }
 
@@ -187,11 +191,11 @@ config.plugins.push(
 );
 
 // 内嵌 manifest 到 html 页面
-config.plugins.push(function() {
-  this.plugin('compilation', function(compilation) {
-    compilation.plugin('html-webpack-plugin-after-emit', function(file, callback) {
+config.plugins.push(function () {
+  this.plugin('compilation', function (compilation) {
+    compilation.plugin('html-webpack-plugin-after-emit', function (file, callback) {
       var manifest = '';
-      Object.keys(compilation.assets).forEach(function(filename) {
+      Object.keys(compilation.assets).forEach(function (filename) {
         if (/\/?manifest.[^\/]*js$/.test(filename)) {
           manifest = '<script>' + compilation.assets[filename].source() + '</script>';
         }
@@ -199,7 +203,7 @@ config.plugins.push(function() {
       if (manifest) {
         var htmlSource = file.html.source();
         htmlSource = htmlSource.replace(/(<\/head>)/, manifest + '$1');
-        file.html.source = function() {
+        file.html.source = function () {
           return htmlSource;
         };
       }
